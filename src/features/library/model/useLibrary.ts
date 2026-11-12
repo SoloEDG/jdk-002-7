@@ -18,6 +18,7 @@ export function useLibrary() {
     selected,
     search,
     tracks,
+    allTracks: catalog,
     select: (id: string) => {
       if (catalog.some((t) => t.id === id)) selectedId.value = id;
     },

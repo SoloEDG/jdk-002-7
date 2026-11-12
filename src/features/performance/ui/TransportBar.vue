@@ -1,6 +1,13 @@
 <script setup lang="ts">
 import type { Phase } from "../../../shared/session";
-defineProps<{ phase: Phase; time: number; duration: number; volume: number }>();
+defineProps<{
+  phase: Phase;
+  time: number;
+  duration: number;
+  volume: number;
+  relayActive: boolean;
+  relayIntermission: boolean;
+}>();
 defineEmits<{
   start: [];
   pause: [];
@@ -20,7 +27,13 @@ const fmt = (n: number) =>
       <span class="timecode"
         >{{ fmt(time) }} <em>/ {{ fmt(duration) }}</em></span
       ><button
-        v-if="phase === 'playing'"
+        v-if="relayIntermission"
+        class="primary"
+        disabled
+      >
+        等待确认第二首</button
+      ><button
+        v-else-if="phase === 'playing'"
         class="primary"
         @click="$emit('pause')"
       >
@@ -31,9 +44,16 @@ const fmt = (n: number) =>
         @click="$emit('resume')"
       >
         ▶ 继续演出</button
-      ><button v-else class="primary" @click="$emit('start')">
-        ▶ {{ phase === "finished" ? "再次演出" : "开始演出" }}</button
       ><button
+        v-else
+        class="primary"
+        :disabled="relayActive"
+        @click="$emit('start')"
+      >
+        ▶
+        {{ relayActive ? "接力进行中" : phase === "finished" ? "再次演出" : "开始演出" }}</button
+      ><button
+        v-if="!relayActive"
         class="icon-button"
         aria-label="重新开始"
         @click="$emit('restart')"

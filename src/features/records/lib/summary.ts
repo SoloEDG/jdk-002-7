@@ -13,6 +13,8 @@ export function makeResult(
     hits: [...hits],
     practice: run.practice,
     speed: run.speed,
+    relayId: run.relayId,
+    relayLeg: run.relayLeg,
   };
 }
 export function rank(accuracy: number) {

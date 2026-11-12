@@ -9,6 +9,12 @@ const props = defineProps<{
   warning: string;
 }>();
 const best = computed(() => bestFor(props.records, props.trackId));
+const kind = (r: Result) =>
+  r.practice
+    ? "练习 " + r.speed + "×"
+    : r.relayLeg
+      ? `接力 ${r.relayLeg}/2`
+      : "正式演出";
 </script>
 <template>
   <section class="records panel">
@@ -18,7 +24,9 @@ const best = computed(() => bestFor(props.records, props.trackId));
       <div>
         <strong>{{ latest.practice ? "练习已完成" : "演出已完成" }}</strong
         ><small
-          >{{ latest.title }} · {{ latest.score.toLocaleString() }} 分</small
+          >{{ latest.title }} · {{ latest.score.toLocaleString() }} 分{{
+            latest.relayLeg ? ` · 接力 ${latest.relayLeg}/2` : ""
+          }}</small
         >
       </div>
     </div>
@@ -40,9 +48,7 @@ const best = computed(() => bestFor(props.records, props.trackId));
       <div v-for="r in records.slice(0, 5)" :key="r.id" class="history-row">
         <span
           >{{ r.title
-          }}<small>{{
-            r.practice ? "练习 " + r.speed + "×" : "正式演出"
-          }}</small></span
+          }}<small>{{ kind(r) }}</small></span
         ><b>{{ r.score.toLocaleString() }}</b>
       </div>
     </details>

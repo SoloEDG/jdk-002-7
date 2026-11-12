@@ -10,6 +10,8 @@ export type Run = {
   start: number;
   end: number;
   notes: Note[];
+  relayId?: string;
+  relayLeg?: 1 | 2;
 };
 export type Result = {
   id: string;
@@ -22,6 +24,8 @@ export type Result = {
   hits: Hit[];
   practice: boolean;
   speed: number;
+  relayId?: string;
+  relayLeg?: 1 | 2;
 };
 export type PracticeConfig = {
   enabled: boolean;

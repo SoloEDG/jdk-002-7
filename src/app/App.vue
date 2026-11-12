@@ -5,6 +5,7 @@ import { StageView, TransportBar } from "../features/performance";
 import { JudgmentPanel } from "../features/judgment";
 import { PracticePanel } from "../features/practice";
 import { RecordsPanel } from "../features/records";
+import { RelayPanel, RelayPrepare, RelayScore } from "../features/relay";
 import { secondsAt } from "../shared/chart";
 const w = useWorkspace();
 const { library: l, practice: p, judgment: j, records: r, performance: s } = w;
@@ -27,7 +28,9 @@ const { library: l, practice: p, judgment: j, records: r, performance: s } = w;
         <div class="eyebrow">FIND YOUR RHYTHM. FEEL THE PULSE.</div>
         <h1>让节奏，接管此刻<span class="green">↗</span></h1>
       </div>
-      <span class="session-badge">SESSION 002 <i></i> 自由演出</span>
+      <span class="session-badge"
+        >SESSION 002 <i></i> {{ w.relayBadge.value }}</span
+      >
     </div>
     <main>
       <div class="left-column">
@@ -44,23 +47,48 @@ const { library: l, practice: p, judgment: j, records: r, performance: s } = w;
           :locked="w.locked.value"
           @update="w.updatePractice"
         />
+        <RelayPanel
+          :tracks="l.allTracks"
+          :first-id="w.relay.firstId.value"
+          :second-id="w.relay.secondId.value"
+          :can-confirm="w.relay.canConfirm.value"
+          :session="w.relay.session.value"
+          :active="w.relay.active.value"
+          :locked="w.locked.value"
+          :history="w.relay.otherSessions.value"
+          :error="w.relay.error.value"
+          @first="w.relay.updateFirst"
+          @second="w.relay.updateSecond"
+          @swap="w.relay.swap"
+          @start="w.startRelay"
+          @quit="w.quitRelay"
+        />
       </div>
       <section class="performance panel">
         <div class="section-label">
           02 / ON STAGE
-          <span>{{ p.config.value.enabled ? "PRACTICE" : "STANDARD" }}</span>
+          <span>
+            <template v-if="w.relay.session.value">
+              RELAY
+              {{ w.relay.session.value.status === "leg1" ? "01" : "02" }}/02
+            </template>
+            <template v-else>{{
+              p.config.value.enabled ? "PRACTICE" : "STANDARD"
+            }}</template>
+          </span>
         </div>
         <div class="now-playing">
           <div>
-            <h2>{{ l.selected.value.title }}</h2>
-            <p>{{ l.selected.value.artist }}</p>
+            <h2>{{ w.stageTrack.value.title }}</h2>
+            <p>{{ w.stageTrack.value.artist }}</p>
           </div>
           <span class="bpm"
-            ><b>{{ l.selected.value.bpm }}</b> BPM</span
+            ><b>{{ w.stageTrack.value.bpm }}</b> BPM</span
           >
         </div>
         <StageView
-          :track="l.selected.value"
+          v-if="!w.relayIntermission.value"
+          :track="w.stageTrack.value"
           :run="s.run.value"
           :time="s.time.value"
           :phase="s.phase.value"
@@ -70,11 +98,21 @@ const { library: l, practice: p, judgment: j, records: r, performance: s } = w;
           :combo="j.stats.value.combo"
           @down="w.down"
           @up="w.up"
-        /><TransportBar
+        />
+        <RelayPrepare
+          v-else
+          :track="w.stageTrack.value"
+          :leg1="w.relay.session.value?.leg1 ?? null"
+          @confirm="w.confirmRelay"
+          @abort="w.quitRelay"
+        />
+        <TransportBar
           :phase="s.phase.value"
-          :time="s.time.value"
-          :duration="secondsAt(l.selected.value.beats, l.selected.value.bpm)"
+          :time="w.relayIntermission.value ? 0 : s.time.value"
+          :duration="secondsAt(w.stageTrack.value.beats, w.stageTrack.value.bpm)"
           :volume="s.volume.value"
+          :relay-active="w.relay.active.value"
+          :relay-intermission="w.relayIntermission.value"
           @start="w.start"
           @restart="w.start"
           @pause="w.pause"
@@ -88,13 +126,19 @@ const { library: l, practice: p, judgment: j, records: r, performance: s } = w;
         </div>
       </section>
       <aside>
+        <RelayScore
+          v-if="w.relay.display.value"
+          :session="w.relay.display.value"
+          :first-title="w.relayFirstTitle.value"
+          :second-title="w.relaySecondTitle.value"
+        />
         <JudgmentPanel
           v-bind="j.stats.value"
           :hits="j.hits.value"
         /><RecordsPanel
           :records="r.records.value"
           :latest="r.latest.value"
-          :track-id="l.selectedId.value"
+          :track-id="w.stageTrack.value.id"
           :warning="r.warning.value"
         />
         <div class="key-guide">
